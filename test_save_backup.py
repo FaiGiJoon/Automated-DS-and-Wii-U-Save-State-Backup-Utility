@@ -96,5 +96,48 @@ class TestSaveBackup(unittest.TestCase):
         backups = [f for f in os.listdir(self.test_backup) if "debounce" in f]
         self.assertEqual(len(backups), 1)
 
+    def test_delta_compression(self):
+        handler = SaveBackupHandler(self.test_backup, use_delta=True)
+        test_file = os.path.join(self.test_source, "game.sav")
+
+        with open(test_file, "w") as f:
+            f.write("Initial data" * 100)
+        handler.handle_event(test_file)
+
+        with open(test_file, "w") as f:
+            f.write("Initial data" * 100 + "modified")
+        handler.last_backup_events = {} # bypass debounce
+        handler.handle_event(test_file)
+
+        # Should have one full and one delta
+        types = [info['type'] for info in handler.metadata.values()]
+        self.assertIn('full', types)
+        self.assertIn('delta', types)
+
+    def test_milestone_logic(self):
+        handler = SaveBackupHandler(self.test_backup)
+        test_file = os.path.join(self.test_source, "milestone.sav")
+
+        # First backup
+        with open(test_file, "w") as f:
+            f.write("data" * 100)
+        handler.handle_event(test_file)
+
+        # Minor change
+        with open(test_file, "w") as f:
+            f.write("data" * 100 + ".")
+        handler.last_backup_events = {}
+        handler.handle_event(test_file)
+
+        # Major change
+        with open(test_file, "w") as f:
+            f.write("data" * 200)
+        handler.last_backup_events = {}
+        handler.handle_event(test_file)
+
+        milestones = [info['milestone'] for info in handler.metadata.values()]
+        self.assertEqual(milestones.count(True), 2) # First and Major change
+        self.assertEqual(milestones.count(False), 1) # Minor change
+
 if __name__ == "__main__":
     unittest.main()
