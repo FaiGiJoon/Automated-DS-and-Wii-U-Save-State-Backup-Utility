@@ -39,3 +39,36 @@ Included is `translator.py`, a macOS-focused utility that provides a real-time E
    python translator.py
    ```
 3. The overlay will appear and track the specified emulator window. Press `Esc` to quit.
+
+## Omni-Translate Framework
+
+The Omni-Translate framework is a modular system for automating the translation of Nintendo ROMs across multiple generations.
+
+### Platforms Supported
+- **Cartridge (NES, SNES, N64):** Binary scanning with custom TBL (table) file support.
+- **Disc (GameCube, Wii):** Shift-JIS string extraction and injection.
+- **Handheld (3DS, Wii U):** MSBT (Message Binary Text) parser and injector.
+
+### Features
+- **Manifest-based workflow:** Strings are extracted into a JSON manifest, allowing for manual review and avoiding redundant LLM calls.
+- **Byte-safety:** Injections are length-checked to ensure ROM stability and prevent data shifting.
+- **Context-aware translation:** Uses local Ollama LLM to provide natural translations.
+
+### Usage (Omni-Translate)
+1. **Extract strings:**
+   ```bash
+   python omni.py --platform handheld --file game.msbt
+   ```
+2. **Translate strings (requires Ollama):**
+   ```bash
+   python omni.py --platform handheld --file game.msbt --translate
+   ```
+3. **Inject translations:**
+   ```bash
+   python omni.py --platform handheld --file game.msbt --inject --output translated.msbt
+   ```
+
+For cartridge-based games with custom encoding, provide a `.tbl` file:
+```bash
+python omni.py --platform cartridge --file game.nes --tbl japanese.tbl
+```
