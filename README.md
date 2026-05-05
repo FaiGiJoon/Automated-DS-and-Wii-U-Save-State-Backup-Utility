@@ -5,14 +5,16 @@ A comprehensive collection of tools for Nintendo emulation enthusiasts, focusing
 ## 🚀 Featured Utilities
 
 ### 1. PokeSync - Universal Save Sync
-Automate your save file backups to a private GitHub repository. Supports multiple platforms and emulators with both a modern GUI and a flexible CLI.
+Automate your save file backups to a private GitHub repository. Supports multiple platforms and emulators with a sleek mobile-inspired dashboard and a flexible CLI.
 
 **Features:**
+- **Modern Dashboard:** Search, filter by platform, and access recommended games instantly.
 - **Cross-Platform:** Works with Citra (3DS), Ryujinx/Yuzu (Switch), and GBA emulators.
 - **GitHub Integration:** Sync your progress across multiple devices using Git.
 - **Automated Discovery:** Automatically scans common emulator paths to find your games.
 
-![PokeSync GUI](docs/images/sync_gui.png)
+![PokeSync Modern UI](docs/images/sync_gui_v2.png)
+*Modern dashboard featuring platform chips and recommended games.*
 
 **Usage (GUI):**
 ```bash
