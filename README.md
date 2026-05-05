@@ -1,74 +1,109 @@
-# Automated-DS-and-Wii-U-Save-State-Backup-Utility
-The Automated DS and Wii U Save-State Backup Utility is a localized version-control service designed to protect and manage emulation progress. Unlike standard emulator saves, which often overwrite the same file repeatedly, this utility creates a historical record of gameplay states.
+# Nintendo Retro Utility Suite
 
-## Game Translator Utility
+A comprehensive collection of tools for Nintendo emulation enthusiasts, focusing on automated save synchronization, intelligent backups, real-time translation, and ROM management.
 
-Included is `translator.py`, a macOS-focused utility that provides a real-time English overlay for Japanese games.
+## 🚀 Featured Utilities
 
-### Features
-- Real-time screen capture of a defined region.
-- Japanese OCR using Tesseract.
-- Natural English translation via local LLM (Ollama).
-- Transparent, always-on-top floating window that tracks the emulator window.
+### 1. PokeSync - Universal Save Sync
+Automate your save file backups to a private GitHub repository. Supports multiple platforms and emulators with both a modern GUI and a flexible CLI.
 
-### Prerequisites (macOS)
-1. Install Tesseract and Japanese language data:
-   ```bash
-   brew install tesseract tesseract-lang
-   ```
-2. Install Ollama and pull a model (e.g., llama3):
-   ```bash
-   ollama pull llama3
-   ```
-3. Install Python dependencies:
-   ```bash
-   pip install pytesseract mss requests Pillow pyobjc-framework-Quartz
-   ```
+**Features:**
+- **Cross-Platform:** Works with Citra (3DS), Ryujinx/Yuzu (Switch), and GBA emulators.
+- **GitHub Integration:** Sync your progress across multiple devices using Git.
+- **Automated Discovery:** Automatically scans common emulator paths to find your games.
 
-### Usage
-1. Configure your settings in `config.json` (optional):
-   ```json
-   {
-       "emulator_name": "Cemu",
-       "ocr_region_offset": {"top": 400, "left": 100, "width": 600, "height": 150},
-       "ollama_model": "llama3"
-   }
-   ```
-2. Run the translator:
-   ```bash
-   python translator.py
-   ```
-3. The overlay will appear and track the specified emulator window. Press `Esc` to quit.
+![PokeSync GUI](docs/images/sync_gui.png)
 
-## Omni-Translate Framework
-
-The Omni-Translate framework is a modular system for automating the translation of Nintendo ROMs across multiple generations.
-
-### Platforms Supported
-- **Cartridge (NES, SNES, N64):** Binary scanning with custom TBL (table) file support.
-- **Disc (GameCube, Wii):** Shift-JIS string extraction and injection.
-- **Handheld (3DS, Wii U):** MSBT (Message Binary Text) parser and injector.
-
-### Features
-- **Manifest-based workflow:** Strings are extracted into a JSON manifest, allowing for manual review and avoiding redundant LLM calls.
-- **Byte-safety:** Injections are length-checked to ensure ROM stability and prevent data shifting.
-- **Context-aware translation:** Uses local Ollama LLM to provide natural translations.
-
-### Usage (Omni-Translate)
-1. **Extract strings:**
-   ```bash
-   python omni.py --platform handheld --file game.msbt
-   ```
-2. **Translate strings (requires Ollama):**
-   ```bash
-   python omni.py --platform handheld --file game.msbt --translate
-   ```
-3. **Inject translations:**
-   ```bash
-   python omni.py --platform handheld --file game.msbt --inject --output translated.msbt
-   ```
-
-For cartridge-based games with custom encoding, provide a `.tbl` file:
+**Usage (GUI):**
 ```bash
-python omni.py --platform cartridge --file game.nes --tbl japanese.tbl
+python main.py
 ```
+
+**Usage (CLI):**
+```bash
+python main.py --list
+python main.py --push <game_id> --platform <platform>
+```
+
+---
+
+### 2. AI-Powered Save-State Backup
+A localized version-control service for emulation progress that goes beyond simple file copying.
+
+**Features:**
+- **AI Scene Recognition:** Automatically generates descriptive labels for your saves using the `Salesforce/blip-image-captioning-base` model by analyzing companion screenshots.
+- **Delta Compression:** Uses `xdelta3` to save space by only storing changes between saves.
+- **Milestone Retention:** Automatically identifies "important" saves (significant file size deltas) and protects them from pruning.
+- **Performance Aware:** Throttles operations if system CPU usage is too high.
+
+![Backup List](docs/images/backup_list.png)
+
+**Usage:**
+```bash
+python save_backup.py /path/to/saves /path/to/backups --extensions .sav .dsv --use-delta
+```
+
+---
+
+### 3. Omni-Translate Framework
+A modular framework for automating the translation of Nintendo ROMs across generations.
+
+**Platforms:**
+- **Cartridge:** NES, SNES, N64 (Binary scanning + TBL support).
+- **Disc:** GameCube, Wii (Shift-JIS scanning).
+- **Handheld:** 3DS, Wii U (MSBT parsing/injection).
+
+![Omni-Translate Help](docs/images/omni_help.png)
+
+**Workflow:**
+1. **Extract:** `python omni.py --platform handheld --file game.msbt`
+2. **Translate:** `python omni.py --platform handheld --file game.msbt --translate --model llama3`
+3. **Inject:** `python omni.py --platform handheld --file game.msbt --inject --output translated.msbt`
+
+---
+
+### 4. Game Translator Utility (macOS)
+Provides a real-time English overlay for Japanese games using OCR and local LLMs.
+
+**Features:**
+- Japanese OCR via Tesseract.
+- Natural translation via Ollama (local LLM).
+- Transparent, always-on-top window that tracks the emulator window position.
+
+**Prerequisites:**
+- `brew install tesseract tesseract-lang`
+- Ollama running locally.
+
+---
+
+### 5. macOS ROM Tagger
+Enhance your ROM library with native macOS metadata and Finder tags.
+
+**Features:**
+- Injects `kMDItemTitle` and `kMDItemIdentifier` from ROM headers.
+- Applies Finder Color Tags (Green for GBA, Purple for GC/Wii).
+- Forces Spotlight indexing for instant searching.
+
+**Usage:**
+```bash
+python mac_rom_tagger.py --dir /path/to/roms
+```
+
+## 🛠 Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/nintendo-util-suite.git
+   cd nintendo-util-suite
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. (Optional) Install external binaries:
+   - **xdelta3** (for delta backups)
+   - **Tesseract** (for the translator)
+   - **Ollama** (for AI translations)
+
+## 📜 License
+This project is licensed under the MIT License.
