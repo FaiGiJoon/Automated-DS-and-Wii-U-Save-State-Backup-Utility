@@ -1,0 +1,142 @@
+import os
+import platform
+import glob
+
+class GameScanner:
+    def __init__(self, citra_path=None, gba_saves_path=None, ryujinx_path=None, yuzu_path=None):
+        self.citra_path = citra_path or self._get_default_citra_path()
+        self.gba_saves_path = gba_saves_path
+        self.ryujinx_path = ryujinx_path or self._get_default_ryujinx_path()
+        self.yuzu_path = yuzu_path or self._get_default_yuzu_path()
+
+    def _get_default_citra_path(self):
+        system = platform.system()
+        if system == "Windows":
+            return os.path.join(os.environ.get("APPDATA", ""), "Citra")
+        elif system == "Darwin":
+            return os.path.expanduser("~/Library/Application Support/Citra")
+        return os.path.expanduser("~/.local/share/citra-emu")
+
+    def _get_default_ryujinx_path(self):
+        system = platform.system()
+        if system == "Windows":
+            return os.path.join(os.environ.get("APPDATA", ""), "Ryujinx")
+        elif system == "Darwin":
+            return os.path.expanduser("~/Library/Application Support/Ryujinx")
+        return os.path.expanduser("~/.config/Ryujinx")
+
+    def _get_default_yuzu_path(self):
+        system = platform.system()
+        if system == "Windows":
+            return os.path.join(os.environ.get("APPDATA", ""), "yuzu")
+        elif system == "Darwin":
+            return os.path.expanduser("~/Library/Application Support/yuzu")
+        return os.path.expanduser("~/.local/share/yuzu")
+
+    def scan_citra(self):
+        games = []
+        if not self.citra_path or not os.path.exists(self.citra_path):
+            return games
+
+        # Logic from PokeSync to find title root
+        sdmc_path = os.path.join(self.citra_path, "sdmc", "Nintendo 3DS")
+        if not os.path.exists(sdmc_path):
+            return games
+
+        title_root = None
+        try:
+            id1_folders = [f for f in os.listdir(sdmc_path) if os.path.isdir(os.path.join(sdmc_path, f))]
+            for id1 in id1_folders:
+                id1_path = os.path.join(sdmc_path, id1)
+                id2_folders = [f for f in os.listdir(id1_path) if os.path.isdir(os.path.join(id1_path, f))]
+                for id2 in id2_folders:
+                    title_path = os.path.join(id1_path, id2, "title")
+                    if os.path.exists(title_path):
+                        title_root = title_path
+                        break
+                if title_root: break
+        except Exception: pass
+
+        if not title_root: return games
+
+        type_folders = ["00040000", "00040002"]
+        for type_folder in type_folders:
+            base_path = os.path.join(title_root, type_folder)
+            if not os.path.exists(base_path): continue
+
+            try:
+                for short_id in os.listdir(base_path):
+                    save_path = os.path.join(base_path, short_id, "data", "00000001", "main")
+                    if os.path.exists(save_path):
+                        full_id = (type_folder + short_id).upper()
+                        games.append({
+                            "platform": "Citra",
+                            "name": f"3DS Game {full_id}",
+                            "id": full_id,
+                            "local_path": save_path
+                        })
+            except Exception: continue
+        return games
+
+    def scan_gba(self):
+        games = []
+        if not self.gba_saves_path or not os.path.exists(self.gba_saves_path):
+            return games
+
+        # GBA saves are usually .sav files
+        try:
+            for file in os.listdir(self.gba_saves_path):
+                if file.lower().endswith(".sav"):
+                    game_name = os.path.splitext(file)[0]
+                    games.append({
+                        "platform": "GBA",
+                        "name": game_name,
+                        "id": game_name,
+                        "local_path": os.path.join(self.gba_saves_path, file)
+                    })
+        except Exception: pass
+        return games
+
+    def scan_switch(self):
+        games = []
+        # Ryujinx
+        if self.ryujinx_path and os.path.exists(self.ryujinx_path):
+            save_root = os.path.join(self.ryujinx_path, "bis", "user", "save")
+            if os.path.exists(save_root):
+                try:
+                    for save_id in os.listdir(save_root):
+                        # Each folder is a game ID or user ID
+                        # Ryujinx structure: bis/user/save/<save_id>/0/ (0 is usually the main save)
+                        save_file = os.path.join(save_root, save_id, "0", "main")
+                        if os.path.exists(save_file):
+                            games.append({
+                                "platform": "Ryujinx",
+                                "name": f"Switch Game {save_id}",
+                                "id": save_id,
+                                "local_path": save_file
+                            })
+                except Exception: pass
+
+        # Yuzu
+        if self.yuzu_path and os.path.exists(self.yuzu_path):
+            save_root = os.path.join(self.yuzu_path, "nand", "user", "save", "0000000000000000")
+            if os.path.exists(save_root):
+                try:
+                    # Yuzu structure: nand/user/save/000...000/<title_id_low>/<title_id_high>/
+                    # This is more complex, using glob
+                    for main_file in glob.glob(os.path.join(save_root, "*", "*", "main")):
+                        path_parts = main_file.split(os.sep)
+                        # title_id is usually parts of the path
+                        title_id = path_parts[-3] + path_parts[-2]
+                        games.append({
+                            "platform": "Yuzu",
+                            "name": f"Switch Game {title_id}",
+                            "id": title_id,
+                            "local_path": main_file
+                        })
+                except Exception: pass
+
+        return games
+
+    def scan_all(self):
+        return self.scan_citra() + self.scan_gba() + self.scan_switch()
