@@ -13,8 +13,22 @@ Automate your save file backups to a private GitHub repository. Supports multipl
 - **GitHub Integration:** Sync your progress across multiple devices using Git.
 - **Automated Discovery:** Automatically scans common emulator paths to find your games.
 
-![PokeSync Modern UI](docs/images/sync_gui_v2.png)
-*Modern dashboard featuring platform chips and recommended games.*
+<div align="center">
+  <table style="width:100%; border-collapse: collapse; border: none;">
+    <tr>
+      <td style="padding: 10px; width: 50%;"><img src="docs/images/sync_gui_v2.png" alt="PokeSync Dashboard" style="width:100%; display: block; border-radius: 10px;"></td>
+      <td style="padding: 10px; width: 50%;"><img src="docs/images/settings_gui.png" alt="Settings View" style="width:100%; display: block; border-radius: 10px;"></td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; width: 50%;"><img src="docs/images/utils_gui.png" alt="Utilities View" style="width:100%; display: block; border-radius: 10px;"></td>
+      <td style="padding: 10px; width: 50%;"><img src="docs/images/backup_list.png" alt="Backup History" style="width:100%; display: block; border-radius: 10px;"></td>
+    </tr>
+  </table>
+  <p><i>The new "Glass-Morphism" interface featuring a dark theme, cyan accents, and responsive layout.</i></p>
+</div>
+
+### 🎮 Supported Emulators
+Nintendo emulators include **Dolphin** (GameCube/Wii), **Cemu** (Wii U), **Yuzu/Eden/Citron** (Switch), **melonDS/DeSmuME** (DS), **Azah/Citra** (3DS), and **mGBA** (Game Boy). These allow playing Nintendo games on PC, Android, and Steam Deck. Other notable options include **Nestopia** (NES), **Project64** (N64), and multifunctional emulators like **RetroArch/Libretro**.
 
 **Usage (GUI):**
 ```bash
@@ -38,8 +52,6 @@ A localized version-control service for emulation progress that goes beyond simp
 - **Milestone Retention:** Automatically identifies "important" saves (significant file size deltas) and protects them from pruning.
 - **Performance Aware:** Throttles operations if system CPU usage is too high.
 
-![Backup List](docs/images/backup_list.png)
-
 **Usage:**
 ```bash
 python save_backup.py /path/to/saves /path/to/backups --extensions .sav .dsv --use-delta
@@ -54,8 +66,6 @@ A modular framework for automating the translation of Nintendo ROMs across gener
 - **Cartridge:** NES, SNES, N64 (Binary scanning + TBL support).
 - **Disc:** GameCube, Wii (Shift-JIS scanning).
 - **Handheld:** 3DS, Wii U (MSBT parsing/injection).
-
-![Omni-Translate Help](docs/images/omni_help.png)
 
 **Workflow:**
 1. **Extract:** `python omni.py --platform handheld --file game.msbt`
