@@ -164,7 +164,7 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         filter_frame = ctk.CTkFrame(self.view_container, fg_color="transparent")
         filter_frame.pack(fill="x", padx=45, pady=10)
 
-        categories = ["All", "GBA", "Citra", "Ryujinx", "Yuzu"]
+        categories = ["All", "GBA", "Citra", "DeSmuME", "Ryujinx", "Yuzu"]
         self.category_btns = {}
 
         for cat in categories:
@@ -224,6 +224,7 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         self.repo_entry = self._create_setting(config_card, "Repo Name", self.manager.config["github_repo_name"])
         self.gba_path_entry = self._create_setting(config_card, "GBA Saves Path", self.manager.config.get("gba_saves_path", ""))
         self.citra_path_entry = self._create_setting(config_card, "Citra Path", self.manager.config.get("citra_path", ""))
+        self.desmume_path_entry = self._create_setting(config_card, "DeSmuME Path", self.manager.config.get("desmume_path", ""))
 
         # Save Button
         save_btn = ctk.CTkButton(scroll_frame, text="Save & Refresh",
@@ -431,6 +432,7 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         colors = {
             "GBA": "#32D74B",    # Success green
             "Citra": "#FF9F0A",  # Warning orange
+            "DeSmuME": "#BF5AF2",# Purple
             "Ryujinx": "#5856D6",# Blue
             "Yuzu": "#5AC8FA"    # Cyan
         }
@@ -442,7 +444,8 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
             "github_token": self.token_entry.get(),
             "github_repo_name": self.repo_entry.get(),
             "gba_saves_path": self.gba_path_entry.get(),
-            "citra_path": self.citra_path_entry.get()
+            "citra_path": self.citra_path_entry.get(),
+            "desmume_path": self.desmume_path_entry.get()
         }
         self.manager.update_config(new_config)
         messagebox.showinfo("Success", "Settings saved and synchronized.")
