@@ -3,11 +3,12 @@ import platform
 import glob
 
 class GameScanner:
-    def __init__(self, citra_path=None, gba_saves_path=None, ryujinx_path=None, yuzu_path=None):
+    def __init__(self, citra_path=None, gba_saves_path=None, ryujinx_path=None, yuzu_path=None, desmume_path=None):
         self.citra_path = citra_path or self._get_default_citra_path()
         self.gba_saves_path = gba_saves_path
         self.ryujinx_path = ryujinx_path or self._get_default_ryujinx_path()
         self.yuzu_path = yuzu_path or self._get_default_yuzu_path()
+        self.desmume_path = desmume_path or self._get_default_desmume_path()
 
     def _get_default_citra_path(self):
         system = platform.system()
@@ -32,6 +33,16 @@ class GameScanner:
         elif system == "Darwin":
             return os.path.expanduser("~/Library/Application Support/yuzu")
         return os.path.expanduser("~/.local/share/yuzu")
+
+    def _get_default_desmume_path(self):
+        system = platform.system()
+        if system == "Windows":
+            # DeSmuME often keeps saves in a 'Battery' subfolder where the .exe is,
+            # but modern versions use AppData
+            return os.path.join(os.environ.get("APPDATA", ""), "DeSmuME")
+        elif system == "Darwin":
+            return os.path.expanduser("~/Library/Application Support/DeSmuME")
+        return os.path.expanduser("~/.config/desmume")
 
     def scan_citra(self):
         games = []
@@ -97,6 +108,29 @@ class GameScanner:
         except Exception: pass
         return games
 
+    def scan_desmume(self):
+        games = []
+        if not self.desmume_path or not os.path.exists(self.desmume_path):
+            return games
+
+        # DeSmuME saves are usually .dsv files in a 'Battery' folder or root
+        search_paths = [self.desmume_path, os.path.join(self.desmume_path, "Battery")]
+
+        for path in search_paths:
+            if not os.path.exists(path): continue
+            try:
+                for file in os.listdir(path):
+                    if file.lower().endswith(".dsv"):
+                        game_name = os.path.splitext(file)[0]
+                        games.append({
+                            "platform": "DeSmuME",
+                            "name": game_name,
+                            "id": game_name,
+                            "local_path": os.path.join(path, file)
+                        })
+            except Exception: pass
+        return games
+
     def scan_switch(self):
         games = []
         # Ryujinx
@@ -139,4 +173,4 @@ class GameScanner:
         return games
 
     def scan_all(self):
-        return self.scan_citra() + self.scan_gba() + self.scan_switch()
+        return self.scan_citra() + self.scan_gba() + self.scan_switch() + self.scan_desmume()

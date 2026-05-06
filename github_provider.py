@@ -59,7 +59,6 @@ class GitHubProvider:
         try:
             if os.path.exists(self.local_dir):
                 if not os.path.exists(os.path.join(self.local_dir, ".git")):
-                    import shutil
                     # If directory exists but isn't a git repo, we might need to be careful.
                     # For PokeSync style, we just clear and clone if it's not a git repo.
                     if os.listdir(self.local_dir):
@@ -75,6 +74,12 @@ class GitHubProvider:
                         self._repo.remotes.origin.set_url(auth_url)
             else:
                 self._repo = git.Repo.clone_from(auth_url, self.local_dir)
+
+            # Configure local user if not set (crucial for first-time use)
+            with self._repo.config_writer() as cw:
+                cw.set_value("user", "name", self.username).release()
+                cw.set_value("user", "email", f"{self.username}@users.noreply.github.com").release()
+
             return True, "Local repo initialized."
         except Exception as e:
             return False, f"Initialization failed: {str(e)}"

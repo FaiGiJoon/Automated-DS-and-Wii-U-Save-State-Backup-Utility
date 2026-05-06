@@ -15,7 +15,8 @@ class SyncManager:
             citra_path=self.config.get("citra_path"),
             gba_saves_path=self.config.get("gba_saves_path"),
             ryujinx_path=self.config.get("ryujinx_path"),
-            yuzu_path=self.config.get("yuzu_path")
+            yuzu_path=self.config.get("yuzu_path"),
+            desmume_path=self.config.get("desmume_path")
         )
 
     def load_config(self):
@@ -29,7 +30,8 @@ class SyncManager:
             "citra_path": "",
             "gba_saves_path": "",
             "ryujinx_path": "",
-            "yuzu_path": ""
+            "yuzu_path": "",
+            "desmume_path": ""
         }
 
     def save_config(self):
@@ -53,7 +55,8 @@ class SyncManager:
             citra_path=self.config.get("citra_path"),
             gba_saves_path=self.config.get("gba_saves_path"),
             ryujinx_path=self.config.get("ryujinx_path"),
-            yuzu_path=self.config.get("yuzu_path")
+            yuzu_path=self.config.get("yuzu_path"),
+            desmume_path=self.config.get("desmume_path")
         )
 
     def get_games(self):
@@ -110,6 +113,23 @@ class SyncManager:
             return True, f"Pulled {game['name']} from GitHub."
         except Exception as e:
             return False, f"Pull failed: {str(e)}"
+
+    def sync_push_all(self):
+        """Pushes all detected game saves to GitHub."""
+        if not self.github:
+            return False, "GitHub not configured."
+
+        games = self.get_games()
+        if not games:
+            return True, "No games detected."
+
+        success_count = 0
+        for game in games:
+            success, _ = self.sync_push(game)
+            if success:
+                success_count += 1
+
+        return True, f"Successfully synced {success_count}/{len(games)} games to GitHub."
 
     def _create_local_backup(self, game):
         if os.path.exists(game['local_path']):

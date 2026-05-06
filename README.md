@@ -16,7 +16,7 @@ Automate your save file backups to a private GitHub repository. Supports multipl
 **Features:**
 *   **Glassmorphism UI**: A stunning interface featuring a deep obsidian background (#0A0A0C) with electric purple and neon cyan accents.
 *   **Modern Dashboard**: Search and filter by platform with interactive chips, and access recommended games instantly.
-*   **Cross-Platform**: Works with Citra (3DS), Ryujinx/Yuzu (Switch), and GBA emulators.
+*   **Cross-Platform**: Works with Citra (3DS), DeSmuME (DS), Ryujinx/Yuzu (Switch), and GBA emulators.
 *   **GitHub Integration**: Sync your progress across multiple devices using Git.
 *   **Automated Discovery**: Automatically scans common emulator paths to find your games.
 
@@ -32,6 +32,13 @@ python main.py
 python main.py --list
 python main.py --push <game_id> --platform <platform>
 ```
+
+### Why Git for Saves?
+OmniNexus uses Git not just for code, but as a high-fidelity engine for your game saves:
+*   **Time Travel**: Corrupted your save? Use Git history to roll back to any previous state.
+*   **Atomic Sync**: Keeps your save files, screenshots, and metadata perfectly in sync across all your devices.
+*   **Conflict Resolution**: Prevents accidental overwrites if you play on two different devices without syncing first.
+*   **Private & Secure**: Your saves stay in your own private GitHub repository, giving you full ownership of your data.
 
 ---
 
