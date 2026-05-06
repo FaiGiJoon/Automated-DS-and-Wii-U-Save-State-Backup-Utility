@@ -21,6 +21,11 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         self.title("PokeSync - Universal Save Sync")
         self.geometry("450x800") # Mobile-style aspect ratio
 
+        # Glass-morphism effect (Transparency)
+        self.attributes("-alpha", 0.95)
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue") # Base theme
+
         # UI State
         self.current_view = None
         self.current_platform = "All"
@@ -34,24 +39,33 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         self.grid_rowconfigure(0, weight=1) # Main content area
         self.grid_rowconfigure(1, weight=0) # Bottom Nav bar
 
+        self.configure(fg_color="#0F0F0F") # Deep dark background
+
         self.main_container = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.main_container.grid(row=0, column=0, sticky="nsew")
 
-        self.nav_bar = ctk.CTkFrame(self, height=70, corner_radius=0)
+        # Glassy Nav Bar
+        self.nav_bar = ctk.CTkFrame(self, height=70, corner_radius=0, fg_color="#1A1A1A", border_width=1, border_color="#333333")
         self.nav_bar.grid(row=1, column=0, sticky="nsew")
         self.nav_bar.grid_propagate(False)
 
         self.nav_bar.grid_columnconfigure((0, 1, 2), weight=1)
 
         self.home_btn = ctk.CTkButton(self.nav_bar, text="Home", corner_radius=20,
+                                     fg_color="transparent", text_color="#00d2ff",
+                                     hover_color="#222222",
                                      command=lambda: self.show_view("Home"))
         self.home_btn.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
 
         self.settings_btn = ctk.CTkButton(self.nav_bar, text="Settings", corner_radius=20,
+                                         fg_color="transparent", text_color="#00d2ff",
+                                         hover_color="#222222",
                                          command=lambda: self.show_view("Settings"))
         self.settings_btn.grid(row=0, column=1, padx=5, pady=10, sticky="nsew")
 
         self.utils_btn = ctk.CTkButton(self.nav_bar, text="Utils", corner_radius=20,
+                                      fg_color="transparent", text_color="#00d2ff",
+                                      hover_color="#222222",
                                       command=lambda: self.show_view("Utils"))
         self.utils_btn.grid(row=0, column=2, padx=5, pady=10, sticky="nsew")
 
@@ -60,10 +74,16 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
     def show_view(self, view_name):
         self.current_view = view_name
 
-        # Update button styles
-        self.home_btn.configure(fg_color=("gray75", "gray25") if view_name != "Home" else ["#3B8ED0", "#1F6AA5"])
-        self.settings_btn.configure(fg_color=("gray75", "gray25") if view_name != "Settings" else ["#3B8ED0", "#1F6AA5"])
-        self.utils_btn.configure(fg_color=("gray75", "gray25") if view_name != "Utils" else ["#3B8ED0", "#1F6AA5"])
+        # Update button styles (Glassy highlights)
+        active_color = "#00d2ff"
+        inactive_color = "transparent"
+
+        self.home_btn.configure(fg_color=active_color if view_name == "Home" else inactive_color,
+                               text_color="white" if view_name == "Home" else "#00d2ff")
+        self.settings_btn.configure(fg_color=active_color if view_name == "Settings" else inactive_color,
+                                   text_color="white" if view_name == "Settings" else "#00d2ff")
+        self.utils_btn.configure(fg_color=active_color if view_name == "Utils" else inactive_color,
+                                text_color="white" if view_name == "Utils" else "#00d2ff")
 
         # Clear main container
         for widget in self.main_container.winfo_children():
@@ -81,9 +101,9 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         header_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         header_frame.pack(fill="x", padx=20, pady=(20, 10))
 
-        ctk.CTkLabel(header_frame, text="Explore", font=ctk.CTkFont(size=28, weight="bold")).pack(side="left")
+        ctk.CTkLabel(header_frame, text="Explore", font=ctk.CTkFont(size=28, weight="bold"), text_color="#00d2ff").pack(side="left")
 
-        search_frame = ctk.CTkFrame(self.main_container, fg_color=("gray90", "gray15"), corner_radius=15)
+        search_frame = ctk.CTkFrame(self.main_container, fg_color="#1A1A1A", corner_radius=15, border_width=1, border_color="#333333")
         search_frame.pack(fill="x", padx=20, pady=10)
 
         self.search_entry = ctk.CTkEntry(search_frame, placeholder_text="Search games...",
@@ -128,9 +148,9 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         scroll_frame = ctk.CTkScrollableFrame(self.main_container, fg_color="transparent")
         scroll_frame.pack(fill="both", expand=True)
 
-        ctk.CTkLabel(scroll_frame, text="Settings", font=ctk.CTkFont(size=28, weight="bold")).pack(pady=(20, 10), padx=20, anchor="w")
+        ctk.CTkLabel(scroll_frame, text="Settings", font=ctk.CTkFont(size=28, weight="bold"), text_color="#00d2ff").pack(pady=(20, 10), padx=20, anchor="w")
 
-        ctk.CTkLabel(scroll_frame, text="GitHub Configuration", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10, 5), padx=20, anchor="w")
+        ctk.CTkLabel(scroll_frame, text="GitHub Configuration", font=ctk.CTkFont(size=18, weight="bold"), text_color="white").pack(pady=(10, 5), padx=20, anchor="w")
         self.user_entry = self._create_setting(scroll_frame, "Username", self.manager.config["github_username"])
         self.token_entry = self._create_setting(scroll_frame, "Token (PAT)", self.manager.config["github_token"], show="*")
         self.repo_entry = self._create_setting(scroll_frame, "Repo Name", self.manager.config["github_repo_name"])
@@ -143,7 +163,7 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
                      command=self.save_settings).pack(pady=30, padx=20, fill="x")
 
     def _render_utils(self):
-        ctk.CTkLabel(self.main_container, text="Utilities", font=ctk.CTkFont(size=28, weight="bold")).pack(pady=(20, 10), padx=20, anchor="w")
+        ctk.CTkLabel(self.main_container, text="Utilities", font=ctk.CTkFont(size=28, weight="bold"), text_color="#00d2ff").pack(pady=(20, 10), padx=20, anchor="w")
 
         utils_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         utils_frame.pack(fill="both", expand=True, padx=20, pady=10)
@@ -156,16 +176,17 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         ]
 
         for name, desc, cmd in utils:
-            card = ctk.CTkFrame(utils_frame, corner_radius=15)
+            card = ctk.CTkFrame(utils_frame, corner_radius=15, fg_color="#1A1A1A", border_width=1, border_color="#333333")
             card.pack(fill="x", pady=10)
 
             info_frame = ctk.CTkFrame(card, fg_color="transparent")
             info_frame.pack(side="left", padx=15, pady=15)
 
-            ctk.CTkLabel(info_frame, text=name, font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w")
-            ctk.CTkLabel(info_frame, text=desc, font=ctk.CTkFont(size=12), text_color="gray").pack(anchor="w")
+            ctk.CTkLabel(info_frame, text=name, font=ctk.CTkFont(size=16, weight="bold"), text_color="white").pack(anchor="w")
+            ctk.CTkLabel(info_frame, text=desc, font=ctk.CTkFont(size=12), text_color="#AAAAAA").pack(anchor="w")
 
             ctk.CTkButton(card, text="Open Help", width=80, corner_radius=10,
+                         fg_color="#00d2ff", text_color="white",
                          command=lambda c=cmd: self._launch_util(c)).pack(side="right", padx=15)
 
     def _launch_util(self, command):
@@ -175,8 +196,8 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         messagebox.showinfo("Utility", f"This would launch: {command}\n(Functionality limited in demo)")
 
     def _create_setting(self, parent, label, value, show=None):
-        ctk.CTkLabel(parent, text=label).pack(anchor="w", padx=20)
-        entry = ctk.CTkEntry(parent, show=show)
+        ctk.CTkLabel(parent, text=label, text_color="#AAAAAA").pack(anchor="w", padx=20)
+        entry = ctk.CTkEntry(parent, show=show, fg_color="#1A1A1A", border_color="#333333", text_color="white")
         entry.insert(0, value)
         entry.pack(fill="x", padx=20, pady=(0, 10))
         return entry
@@ -193,9 +214,9 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
     def _update_chip_styles(self):
         for cat, btn in self.category_btns.items():
             if cat == self.current_platform:
-                btn.configure(fg_color=["#3B8ED0", "#1F6AA5"], text_color="white")
+                btn.configure(fg_color="#00d2ff", text_color="white")
             else:
-                btn.configure(fg_color=("gray85", "gray25"), text_color=("black", "white"))
+                btn.configure(fg_color="#1A1A1A", text_color="#00d2ff", border_width=1, border_color="#333333")
 
     def refresh_home_lists(self):
         # Clear existing
@@ -230,7 +251,7 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
 
     def _create_game_card(self, parent, game, horizontal=False):
         if horizontal:
-            card = ctk.CTkFrame(parent, width=150, height=160, corner_radius=15)
+            card = ctk.CTkFrame(parent, width=150, height=160, corner_radius=15, fg_color="#1A1A1A", border_width=1, border_color="#333333")
             card.pack(side="left", padx=10, pady=5)
             card.pack_propagate(False)
 
@@ -240,24 +261,24 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
                         fg_color=tag_color, text_color="white", corner_radius=5).pack(pady=(10, 5))
 
             ctk.CTkLabel(card, text=game['name'], font=ctk.CTkFont(size=13, weight="bold"),
-                        wraplength=130).pack(pady=5)
+                        wraplength=130, text_color="white").pack(pady=5)
 
             btn_frame = ctk.CTkFrame(card, fg_color="transparent")
             btn_frame.pack(side="bottom", pady=10)
-            ctk.CTkButton(btn_frame, text="↑", width=40, fg_color="green",
+            ctk.CTkButton(btn_frame, text="↑", width=40, fg_color="#2ecc71",
                          command=lambda: self.sync_action("push", game)).pack(side="left", padx=2)
-            ctk.CTkButton(btn_frame, text="↓", width=40, fg_color="blue",
+            ctk.CTkButton(btn_frame, text="↓", width=40, fg_color="#3498db",
                          command=lambda: self.sync_action("pull", game)).pack(side="left", padx=2)
         else:
-            card = ctk.CTkFrame(parent, corner_radius=10)
+            card = ctk.CTkFrame(parent, corner_radius=10, fg_color="#1A1A1A", border_width=1, border_color="#333333")
             card.pack(fill="x", padx=5, pady=5)
 
-            ctk.CTkLabel(card, text=game['name'], font=ctk.CTkFont(weight="bold")).pack(side="left", padx=15, pady=10)
+            ctk.CTkLabel(card, text=game['name'], font=ctk.CTkFont(weight="bold"), text_color="white").pack(side="left", padx=15, pady=10)
 
             # Actions on the right
-            ctk.CTkButton(card, text="Pull", width=60, fg_color="blue",
+            ctk.CTkButton(card, text="Pull", width=60, fg_color="#3498db",
                          command=lambda g=game: self.sync_action("pull", g)).pack(side="right", padx=5)
-            ctk.CTkButton(card, text="Push", width=60, fg_color="green",
+            ctk.CTkButton(card, text="Push", width=60, fg_color="#2ecc71",
                          command=lambda g=game: self.sync_action("push", g)).pack(side="right", padx=5)
 
             tag_color = self._get_platform_color(game['platform'])
@@ -266,12 +287,12 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
 
     def _get_platform_color(self, platform):
         colors = {
-            "GBA": "#2ecc71",
-            "Citra": "#f1c40f",
-            "Ryujinx": "#e67e22",
-            "Yuzu": "#3498db"
+            "GBA": "#16a085",
+            "Citra": "#f39c12",
+            "Ryujinx": "#d35400",
+            "Yuzu": "#2980b9"
         }
-        return colors.get(platform, "#95a5a6")
+        return colors.get(platform, "#7f8c8d")
 
     def save_settings(self):
         new_config = {
