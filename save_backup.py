@@ -32,16 +32,26 @@ BACKUP_PATTERN = re.compile(r".*_\d{8}_\d{6}_\d{6}\..*")
 METADATA_FILE = "metadata.json"
 
 class SaveBackupHandler(FileSystemEventHandler):
-    def __init__(self, backup_dir, extensions=None, retention_days=7, cpu_threshold=60, use_delta=False):
+    def __init__(self, backup_dir, extensions=None, retention_days=7, cpu_threshold=60, use_delta=False, git_sync=False):
         self.backup_dir = os.path.abspath(backup_dir)
         self.extensions = extensions
         self.retention_days = retention_days
         self.cpu_threshold = cpu_threshold
         self.use_delta = use_delta
+        self.git_sync = git_sync
         self.last_prune_time = 0
         self.last_backup_events = {} # {file_path: timestamp}
         self.metadata_path = os.path.join(self.backup_dir, METADATA_FILE)
         self.metadata = self.load_metadata()
+
+        if self.git_sync:
+            try:
+                from sync_manager import SyncManager
+                self.sync_manager = SyncManager()
+                print("Git Sync enabled for Milestone backups.")
+            except Exception as e:
+                print(f"Failed to initialize SyncManager for Git Sync: {e}")
+                self.git_sync = False
 
     def load_metadata(self):
         if os.path.exists(self.metadata_path):
@@ -94,6 +104,19 @@ class SaveBackupHandler(FileSystemEventHandler):
             backup_path = copy_with_timestamp(file_path, self.backup_dir, use_delta=self.use_delta, metadata=self.metadata)
             if backup_path:
                 self.last_backup_events[file_path] = current_time
+
+                # If this was a milestone, trigger Git Sync if enabled
+                if self.git_sync and self.metadata.get(os.path.basename(backup_path), {}).get("milestone"):
+                    print(f"Milestone detected for {os.path.basename(file_path)}. Triggering Git Sync...")
+                    # We need to find the game in sync manager
+                    games = self.sync_manager.get_games()
+                    game = next((g for g in games if os.path.abspath(g['local_path']) == file_path), None)
+                    if game:
+                        success, msg = self.sync_manager.sync_push(game)
+                        print(f"Git Sync Status: {msg}")
+                    else:
+                        print("File not recognized by PokeSync. Skipping Git Sync.")
+
                 self.save_metadata()
                 self.periodic_prune()
 
@@ -332,6 +355,7 @@ def main():
     parser.add_argument("--recursive", action="store_true", help="Monitor subdirectories recursively")
     parser.add_argument("--cpu-threshold", type=int, default=60, help="CPU usage threshold to delay backups (default: 60)")
     parser.add_argument("--use-delta", action="store_true", help="Use delta compression for backups")
+    parser.add_argument("--git-sync", action="store_true", help="Automatically push milestones to GitHub")
 
     args = parser.parse_args()
 
@@ -378,7 +402,8 @@ def main():
         extensions=args.extensions,
         retention_days=args.retention,
         cpu_threshold=args.cpu_threshold,
-        use_delta=args.use_delta
+        use_delta=args.use_delta,
+        git_sync=args.git_sync
     )
     observer = Observer()
     observer.schedule(event_handler, source_dir, recursive=args.recursive)
