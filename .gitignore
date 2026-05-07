@@ -1,1 +1,5 @@
 __pycache__/
+backups/
+save_repo/
+sync_config.json
+*.manifest.json

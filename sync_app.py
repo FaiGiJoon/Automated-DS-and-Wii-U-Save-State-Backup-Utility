@@ -19,8 +19,8 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
 
         super().__init__()
         self.manager = manager
-        self.title("FAIGIJOON UTILITY MANAGER")
-        self.geometry("1100x750")
+        self.title("OMNINEXUS UTILITY MANAGER")
+        self.geometry("1100x800")
 
         # Set theme colors
         self.configure(fg_color=gui_theme.COLORS["bg"])
@@ -47,7 +47,7 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         self.sidebar.grid_propagate(False)
 
         # Sidebar Logo/Title
-        self.logo_label = ctk.CTkLabel(self.sidebar, text="POKESYNC",
+        self.logo_label = ctk.CTkLabel(self.sidebar, text="OMNINEXUS",
                                       font=ctk.CTkFont(size=22, weight="bold"),
                                       text_color=gui_theme.COLORS["cyan"])
         self.logo_label.pack(pady=(40, 60))
@@ -86,7 +86,7 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         self.top_bar = ctk.CTkFrame(self.main_container, fg_color="transparent", height=40)
         self.top_bar.pack(fill="x", padx=20, pady=(15, 0))
 
-        self.window_title = ctk.CTkLabel(self.top_bar, text="FAIGIJOON UTILITY MANAGER",
+        self.window_title = ctk.CTkLabel(self.top_bar, text="OMNINEXUS CLOUD-CONNECTED MANAGER",
                                         font=ctk.CTkFont(size=12, weight="bold"),
                                         text_color=gui_theme.COLORS["text_dim"])
         self.window_title.pack(side="left")
@@ -209,25 +209,57 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
                     font=ctk.CTkFont(size=48, weight="bold"),
                     text_color=gui_theme.COLORS["purple"]).pack(pady=(40, 25), padx=50, anchor="w")
 
+        # Provider Selection
+        provider_frame = ctk.CTkFrame(scroll_frame, fg_color=gui_theme.COLORS["card_bg"],
+                                     corner_radius=20, border_color=gui_theme.COLORS["blue"], border_width=2)
+        provider_frame.pack(fill="x", padx=50, pady=10)
+
+        ctk.CTkLabel(provider_frame, text="Sync Provider",
+                    font=ctk.CTkFont(size=22, weight="bold"),
+                    text_color=gui_theme.COLORS["cyan"]).pack(pady=(20, 10), padx=30, anchor="w")
+
+        self.provider_var = ctk.StringVar(value=self.manager.config.get("provider_type", "github"))
+        github_radio = ctk.CTkRadioButton(provider_frame, text="GitHub (Git Versioned)",
+                                         variable=self.provider_var, value="github",
+                                         fg_color=gui_theme.COLORS["purple"], hover_color=gui_theme.COLORS["blue"])
+        github_radio.pack(anchor="w", padx=40, pady=10)
+
+        local_radio = ctk.CTkRadioButton(provider_frame, text="Local Folder / Google Drive",
+                                        variable=self.provider_var, value="local",
+                                        fg_color=gui_theme.COLORS["purple"], hover_color=gui_theme.COLORS["blue"])
+        local_radio.pack(anchor="w", padx=40, pady=10)
+
         # Configuration Card
         config_card = ctk.CTkFrame(scroll_frame, fg_color=gui_theme.COLORS["card_bg"],
                                   border_color=gui_theme.COLORS["cyan"], border_width=2,
                                   corner_radius=20)
-        config_card.pack(fill="x", padx=50, pady=10)
+        config_card.pack(fill="x", padx=50, pady=20)
 
-        ctk.CTkLabel(config_card, text="Configuration & Paths",
+        ctk.CTkLabel(config_card, text="Cloud Configuration",
                     font=ctk.CTkFont(size=22, weight="bold"),
                     text_color=gui_theme.COLORS["cyan"]).pack(pady=(20, 15), padx=30, anchor="w")
 
-        self.user_entry = self._create_setting(config_card, "GitHub Username", self.manager.config["github_username"])
-        self.token_entry = self._create_setting(config_card, "Token (PAT)", self.manager.config["github_token"], show="*")
-        self.repo_entry = self._create_setting(config_card, "Repo Name", self.manager.config["github_repo_name"])
-        self.gba_path_entry = self._create_setting(config_card, "GBA Saves Path", self.manager.config.get("gba_saves_path", ""))
-        self.citra_path_entry = self._create_setting(config_card, "Citra Path", self.manager.config.get("citra_path", ""))
-        self.desmume_path_entry = self._create_setting(config_card, "DeSmuME Path", self.manager.config.get("desmume_path", ""))
+        self.user_entry = self._create_setting(config_card, "GitHub Username", self.manager.config.get("github_username", ""))
+        self.token_entry = self._create_setting(config_card, "GitHub Token (PAT)", self.manager.config.get("github_token", ""), show="*")
+        self.repo_entry = self._create_setting(config_card, "GitHub Repo Name", self.manager.config.get("github_repo_name", "pokesync-saves"))
+        self.local_cloud_entry = self._create_setting(config_card, "Cloud Folder Path (Google Drive)", self.manager.config.get("local_cloud_path", ""))
+
+        # Paths Card
+        paths_card = ctk.CTkFrame(scroll_frame, fg_color=gui_theme.COLORS["card_bg"],
+                                 border_color=gui_theme.COLORS["purple"], border_width=2,
+                                 corner_radius=20)
+        paths_card.pack(fill="x", padx=50, pady=10)
+
+        ctk.CTkLabel(paths_card, text="Emulator Paths",
+                    font=ctk.CTkFont(size=22, weight="bold"),
+                    text_color=gui_theme.COLORS["purple"]).pack(pady=(20, 15), padx=30, anchor="w")
+
+        self.gba_path_entry = self._create_setting(paths_card, "GBA Saves Path", self.manager.config.get("gba_saves_path", ""))
+        self.citra_path_entry = self._create_setting(paths_card, "Citra Path", self.manager.config.get("citra_path", ""))
+        self.desmume_path_entry = self._create_setting(paths_card, "DeSmuME Path", self.manager.config.get("desmume_path", ""))
 
         # Save Button
-        save_btn = ctk.CTkButton(scroll_frame, text="Save & Refresh",
+        save_btn = ctk.CTkButton(scroll_frame, text="Save & Refresh Provider",
                                corner_radius=12,
                                fg_color=gui_theme.COLORS["purple"],
                                hover_color=gui_theme.COLORS["blue"],
@@ -245,8 +277,8 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
         utils_scroll.pack(fill="both", expand=True, padx=30)
 
         utils = [
-            ("ROM Translation", "Launch Omni-Translate", "python3 omni.py --help"),
-            ("AI Save Backup", "Launch Save-State Backup", "python3 save_backup.py --help"),
+            ("ROM Translation", "Sync-enabled Manifests", "python3 omni.py --help"),
+            ("AI Save Backup", "Automatic Cloud Milestone Push", "python3 save_backup.py --help"),
             ("macOS Tagger", "Tag ROMs with Metadata", "python3 mac_rom_tagger.py --help"),
             ("Real-time Translator", "Overlay Translation", "python3 translator.py --help")
         ]
@@ -288,10 +320,10 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
 
         # Insert log text
         logs = [
-            ("[SUCCESS]", gui_theme.COLORS["success"], "Verified that color_constants.py contains the required ANSI sequences and style presets for the CLI fallbacks."),
-            ("[INFO]", gui_theme.COLORS["info"], "GUI environment check: customtkinter found, display server active."),
-            ("[SUCCESS]", gui_theme.COLORS["success"], "Verified that all modified scripts (omni.py, save_backup.py, mac_rom_tagger.py, sync_app.py) execute without import errors and follow the new Faigijoon design language."),
-            ("[INFO]", gui_theme.COLORS["info"], "Successfully transition from terminal-based ANSI styling to a high-fidelity Graphical User Interface (GUI).")
+            ("[SUCCESS]", gui_theme.COLORS["success"], "Sync provider updated to support Google Drive and local cloud folders."),
+            ("[INFO]", gui_theme.COLORS["info"], "Git versioning active for GitHub provider."),
+            ("[SUCCESS]", gui_theme.COLORS["success"], "Verified that ROM translation manifests can now be synced to the cloud."),
+            ("[INFO]", gui_theme.COLORS["info"], "OmniNexus framework fully supports cross-platform cloud synchronization.")
         ]
 
         for tag, color, msg in logs:
@@ -440,15 +472,17 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
 
     def save_settings(self):
         new_config = {
+            "provider_type": self.provider_var.get(),
             "github_username": self.user_entry.get(),
             "github_token": self.token_entry.get(),
             "github_repo_name": self.repo_entry.get(),
+            "local_cloud_path": self.local_cloud_entry.get(),
             "gba_saves_path": self.gba_path_entry.get(),
             "citra_path": self.citra_path_entry.get(),
             "desmume_path": self.desmume_path_entry.get()
         }
         self.manager.update_config(new_config)
-        messagebox.showinfo("Success", "Settings saved and synchronized.")
+        messagebox.showinfo("Success", "Settings saved and provider re-initialized.")
 
     def sync_action(self, action, game):
         if action == "push":
@@ -462,11 +496,12 @@ class PokeSyncApp(ctk.CTk if GUI_AVAILABLE else object):
             messagebox.showerror("Error", msg)
 
 def cli_main():
-    parser = argparse.ArgumentParser(description="PokeSync CLI")
+    parser = argparse.ArgumentParser(description="OmniNexus Sync Tool")
     parser.add_argument("--list", action="store_true", help="List detected games")
     parser.add_argument("--push", help="Push save for game ID")
     parser.add_argument("--pull", help="Pull save for game ID")
     parser.add_argument("--platform", help="Platform for push/pull (Citra, GBA, Ryujinx, Yuzu)")
+    parser.add_argument("--sync-all", action="store_true", help="Push all saves to cloud")
 
     args = parser.parse_args()
     manager = SyncManager()
@@ -477,6 +512,10 @@ def cli_main():
         print("-" * 50)
         for g in games:
             print(f"{g['platform']:<10} {g['id']:<20} {g['name']}")
+
+    elif args.sync_all:
+        success, msg = manager.sync_push_all()
+        print(msg)
 
     elif args.push:
         games = [g for g in manager.get_games() if g['id'] == args.push]

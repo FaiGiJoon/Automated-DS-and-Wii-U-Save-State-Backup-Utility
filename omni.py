@@ -5,6 +5,7 @@ from omni.core.engine import TranslationEngine, ManifestManager
 from omni.modules.handheld import HandheldModule
 from omni.modules.disc import DiscModule
 from omni.modules.cartridge import CartridgeModule
+from sync_manager import SyncManager
 
 def main():
     parser = argparse.ArgumentParser(description="Omni-Translate: Automated ROM Translation Framework")
@@ -15,6 +16,8 @@ def main():
     parser.add_argument("--manifest", help="Path to the JSON manifest (will be created if not exists)")
     parser.add_argument("--translate", action="store_true", help="Perform translation via LLM")
     parser.add_argument("--inject", action="store_true", help="Inject translations from manifest into file")
+    parser.add_argument("--sync", action="store_true", help="Push manifest to cloud sync provider")
+    parser.add_argument("--pull-sync", action="store_true", help="Pull manifest from cloud sync provider")
     parser.add_argument("--model", default="llama3", help="Ollama model to use")
     parser.add_argument("--tbl", help="Path to .tbl file (for cartridge platform)")
 
@@ -32,6 +35,13 @@ def main():
         sys.exit(1)
 
     manifest_path = args.manifest or f"{args.file}.manifest.json"
+
+    # Handle Cloud Pull
+    if args.pull_sync:
+        sync = SyncManager()
+        print(f"Attempting to pull {manifest_path} from cloud...")
+        success, msg = sync.sync_manifest_pull(manifest_path)
+        print(msg)
 
     # 2. Extract or Load Manifest
     if os.path.exists(manifest_path):
@@ -53,6 +63,13 @@ def main():
                     info["translation"] = translation
                     print(f"Translated: {info['original']} -> {translation}")
         ManifestManager.save(manifest, manifest_path)
+
+    # Handle Cloud Push
+    if args.sync:
+        sync = SyncManager()
+        print(f"Pushing {manifest_path} to cloud...")
+        success, msg = sync.sync_manifest_push(manifest_path)
+        print(msg)
 
     # 4. Inject
     if args.inject:

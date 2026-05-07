@@ -3,14 +3,15 @@ import json
 import shutil
 from datetime import datetime
 from github_provider import GitHubProvider
+from local_provider import LocalCloudProvider
 from game_scanner import GameScanner
 
 class SyncManager:
     def __init__(self, config_path="sync_config.json"):
         self.config_path = config_path
         self.config = self.load_config()
-        self.github = None
-        self._init_github()
+        self.provider = None
+        self._init_provider()
         self.scanner = GameScanner(
             citra_path=self.config.get("citra_path"),
             gba_saves_path=self.config.get("gba_saves_path"),
@@ -24,9 +25,11 @@ class SyncManager:
             with open(self.config_path, 'r') as f:
                 return json.load(f)
         return {
+            "provider_type": "github", # github or local
             "github_username": "",
             "github_token": "",
             "github_repo_name": "pokesync-saves",
+            "local_cloud_path": "",
             "citra_path": "",
             "gba_saves_path": "",
             "ryujinx_path": "",
@@ -38,18 +41,25 @@ class SyncManager:
         with open(self.config_path, 'w') as f:
             json.dump(self.config, f, indent=4)
 
-    def _init_github(self):
-        if self.config.get("github_username") and self.config.get("github_token"):
-            self.github = GitHubProvider(
-                self.config["github_username"],
-                self.config["github_token"],
-                self.config["github_repo_name"]
-            )
+    def _init_provider(self):
+        provider_type = self.config.get("provider_type", "github")
+        if provider_type == "github":
+            if self.config.get("github_username") and self.config.get("github_token"):
+                self.provider = GitHubProvider(
+                    self.config["github_username"],
+                    self.config["github_token"],
+                    self.config["github_repo_name"]
+                )
+        elif provider_type == "local":
+            if self.config.get("local_cloud_path"):
+                self.provider = LocalCloudProvider(
+                    self.config["local_cloud_path"]
+                )
 
     def update_config(self, new_config):
         self.config.update(new_config)
         self.save_config()
-        self._init_github()
+        self._init_provider()
         # Update scanner if paths changed
         self.scanner = GameScanner(
             citra_path=self.config.get("citra_path"),
@@ -63,61 +73,49 @@ class SyncManager:
         return self.scanner.scan_all()
 
     def sync_push(self, game):
-        if not self.github:
-            return False, "GitHub not configured."
+        if not self.provider:
+            return False, "Sync provider not configured."
 
-        # Ensure repo exists and is initialized
-        success, msg = self.github.ensure_repo_exists()
-        if not success: return False, msg
-
-        success, msg = self.github.initialize_local_repo()
-        if not success: return False, msg
-
-        # Copy file to local repo
+        # Copy file to cloud
         # Structure: <platform>/<game_id>/main
         platform = game['platform']
         game_id = game['id']
-        relative_path = os.path.join(platform, game_id, os.path.basename(game['local_path']))
-        dest_path = self.github.get_local_path(relative_path)
+        filename = os.path.basename(game['local_path'])
+        relative_path = os.path.join(platform, game_id, filename)
 
-        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         try:
-            # Create local backup before pushing (using PokeSync style)
+            # Create local backup before pushing
             self._create_local_backup(game)
-            shutil.copy2(game['local_path'], dest_path)
 
-            # Git push
-            return self.github.push(f"Update {platform} save: {game['name']}")
+            # Provider push
+            return self.provider.push(game['local_path'], relative_path, f"Update {platform} save: {game['name']}")
         except Exception as e:
-            return False, f"Sync failed: {str(e)}"
+            return False, f"Sync push failed: {str(e)}"
 
     def sync_pull(self, game):
-        if not self.github:
-            return False, "GitHub not configured."
-
-        success, msg = self.github.pull()
-        if not success: return False, msg
+        if not self.provider:
+            return False, "Sync provider not configured."
 
         platform = game['platform']
         game_id = game['id']
-        relative_path = os.path.join(platform, game_id, os.path.basename(game['local_path']))
-        repo_path = self.github.get_local_path(relative_path)
-
-        if not os.path.exists(repo_path):
-            return False, "Save not found in GitHub."
+        filename = os.path.basename(game['local_path'])
+        relative_path = os.path.join(platform, game_id, filename)
 
         try:
             # Backup current local save before overwriting
             self._create_local_backup(game)
-            shutil.copy2(repo_path, game['local_path'])
-            return True, f"Pulled {game['name']} from GitHub."
+
+            success, msg = self.provider.pull(relative_path, game['local_path'])
+            if success:
+                return True, f"Pulled {game['name']} from {self.config.get('provider_type')}."
+            return False, msg
         except Exception as e:
-            return False, f"Pull failed: {str(e)}"
+            return False, f"Sync pull failed: {str(e)}"
 
     def sync_push_all(self):
-        """Pushes all detected game saves to GitHub."""
-        if not self.github:
-            return False, "GitHub not configured."
+        """Pushes all detected game saves to cloud."""
+        if not self.provider:
+            return False, "Sync provider not configured."
 
         games = self.get_games()
         if not games:
@@ -129,7 +127,25 @@ class SyncManager:
             if success:
                 success_count += 1
 
-        return True, f"Successfully synced {success_count}/{len(games)} games to GitHub."
+        return True, f"Successfully synced {success_count}/{len(games)} games to cloud."
+
+    def sync_manifest_push(self, manifest_path):
+        if not self.provider:
+            return False, "Sync provider not configured."
+
+        filename = os.path.basename(manifest_path)
+        relative_path = os.path.join("manifests", filename)
+
+        return self.provider.push(manifest_path, relative_path, f"Update translation manifest: {filename}")
+
+    def sync_manifest_pull(self, manifest_path):
+        if not self.provider:
+            return False, "Sync provider not configured."
+
+        filename = os.path.basename(manifest_path)
+        relative_path = os.path.join("manifests", filename)
+
+        return self.provider.pull(relative_path, manifest_path)
 
     def _create_local_backup(self, game):
         if os.path.exists(game['local_path']):
